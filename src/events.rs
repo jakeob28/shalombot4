@@ -18,7 +18,7 @@ impl EventHandler for Handler {
         if !self.is_watch_running.load(Ordering::Relaxed) {
             info!("{} is connected!", ready.user.name);
             crossword::start_crossword_watch(Context::clone(&ctx)).await;
-            self.is_watch_running.store(true, Relaxed)
+            self.is_watch_running.store(true, Relaxed);
         }
     }
 }

@@ -3,10 +3,13 @@ mod puzzle_time_utils;
 use crate::crossword::puzzle_time_utils::puzzle_period;
 use chrono::NaiveDate;
 use log::{debug, error, info, warn};
+use reqwest::Error;
+use std::fmt::{Display, Formatter};
 
 use serde_json::Value;
 use serenity::client::Context;
 use serenity::futures::StreamExt;
+use serenity::json::JsonError;
 use serenity::model::application::component::ButtonStyle;
 use serenity::model::channel::Message;
 use serenity::model::id::ChannelId;
@@ -18,7 +21,7 @@ const CROSSWORD_CHANNEL: u64 = 765753596532359190;
 pub async fn start_crossword_watch(ctx: Context) {
     info!("Starting crossword watch...");
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_secs(5));
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(10));
         let mut cw: CrosswordWatcher = CrosswordWatcher {
             ctx,
             last_posted_puzzle: None,
@@ -106,12 +109,39 @@ impl CrosswordWatcher {
     }
 }
 
-async fn query_nyt_latest_puzzle_date() -> Result<NaiveDate, reqwest::Error> {
+#[derive(Debug)]
+enum PuzzleDateQueryError {
+    ReqwestError(reqwest::Error),
+    JsonError(JsonError),
+}
+
+impl Display for PuzzleDateQueryError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PuzzleDateQueryError::ReqwestError(inner) => write!(f, "Reqwest Error: {inner}"),
+            PuzzleDateQueryError::JsonError(inner) => write!(f, "JSON Parsing Error: {inner}"),
+        }
+    }
+}
+
+impl From<reqwest::Error> for PuzzleDateQueryError {
+    fn from(value: Error) -> Self {
+        PuzzleDateQueryError::ReqwestError(value)
+    }
+}
+
+impl From<JsonError> for PuzzleDateQueryError {
+    fn from(value: JsonError) -> Self {
+        PuzzleDateQueryError::JsonError(value)
+    }
+}
+
+async fn query_nyt_latest_puzzle_date() -> Result<NaiveDate, PuzzleDateQueryError> {
     let body = reqwest::get("https://www.nytimes.com/svc/crosswords/v6/puzzle/mini.json")
         .await?
         .text()
         .await?;
-    let json: Value = serde_json::from_str(&body).expect("Error parsing JSON");
+    let json: Value = serde_json::from_str(&body)?;
     let date = NaiveDate::parse_from_str(json["publicationDate"].as_str().unwrap(), "%Y-%m-%d")
         .expect("Bad date format");
     Ok(date)
