@@ -1,11 +1,12 @@
 use log::{error, info};
-use std::env;
 use std::sync::atomic::AtomicBool;
 
 use serenity::prelude::*;
 
+use crate::botconfig::BotConfig;
 use events::Handler;
 
+mod botconfig;
 mod crossword;
 mod events;
 
@@ -14,11 +15,13 @@ async fn main() {
     env_logger::init();
     info!("ShalomBot4 Started");
 
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    info!("Loading config...");
+    let config = BotConfig::global_cfg();
+
     let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT;
 
     info!("Creating client...");
-    let mut client = Client::builder(&token, intents)
+    let mut client = Client::builder(&config.discord_token, intents)
         .event_handler(Handler {
             is_watch_running: AtomicBool::new(false),
         })

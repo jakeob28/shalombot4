@@ -14,9 +14,8 @@ use serenity::model::application::component::ButtonStyle;
 use serenity::model::channel::Message;
 use serenity::model::id::ChannelId;
 
+use crate::BotConfig;
 use serenity::utils::Colour;
-
-const CROSSWORD_CHANNEL: u64 = 765753596532359190;
 
 pub async fn start_crossword_watch(ctx: Context) {
     info!("Starting crossword watch...");
@@ -55,12 +54,12 @@ impl CrosswordWatcher {
 
     async fn send_crossword_message(&self, date: NaiveDate) {
         let period = puzzle_period(&date);
-        match ChannelId(CROSSWORD_CHANNEL).send_message(&self.ctx, |m| {
+        match ChannelId(BotConfig::global_cfg().guild_settings.crossword_channel).send_message(&self.ctx, |m| {
             m.embed(|e| {
                 e.title(date.format("%A, %B %-d, %Y"))
                     .description("https://www.nytimes.com/crosswords/game/mini")
                     .thumbnail("https://cdn.discordapp.com/attachments/694653665910456322/1071919797819936798/mini-progress-0.png")
-                    .color(Colour::from(0x00ffff))
+                    .color(Colour::from(BotConfig::global_cfg().embed_color))
                     .field("Start", format!("<t:{}:R>", period.0.timestamp()), true)
                     .field("End", format!("<t:{}:R>", period.1.timestamp()), true)
             }).components(|f| {
@@ -84,7 +83,7 @@ impl CrosswordWatcher {
             }
         }
         debug!("Scanning messages for last posted puzzle");
-        let mut messages = ChannelId(CROSSWORD_CHANNEL)
+        let mut messages = ChannelId(BotConfig::global_cfg().guild_settings.crossword_channel)
             .messages_iter(&self.ctx)
             .boxed();
         while let Some(message_result) = messages.next().await {
@@ -118,8 +117,8 @@ enum PuzzleDateQueryError {
 impl Display for PuzzleDateQueryError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            PuzzleDateQueryError::ReqwestError(inner) => write!(f, "Reqwest Error: {inner}"),
-            PuzzleDateQueryError::JsonError(inner) => write!(f, "JSON Parsing Error: {inner}"),
+            PuzzleDateQueryError::ReqwestError(_inner) => write!(f, "Reqwest Error: {inner}"),
+            PuzzleDateQueryError::JsonError(_inner) => write!(f, "JSON Parsing Error: {inner}"),
         }
     }
 }
