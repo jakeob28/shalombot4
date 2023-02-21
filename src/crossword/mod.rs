@@ -117,8 +117,8 @@ enum PuzzleDateQueryError {
 impl Display for PuzzleDateQueryError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            PuzzleDateQueryError::ReqwestError(_inner) => write!(f, "Reqwest Error: {inner}"),
-            PuzzleDateQueryError::JsonError(_inner) => write!(f, "JSON Parsing Error: {inner}"),
+            PuzzleDateQueryError::ReqwestError(inner) => write!(f, "Reqwest Error: {inner}"),
+            PuzzleDateQueryError::JsonError(inner) => write!(f, "JSON Parsing Error: {inner}"),
         }
     }
 }
