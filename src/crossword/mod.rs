@@ -5,6 +5,7 @@ use chrono::NaiveDate;
 use log::{debug, error, info, warn};
 use reqwest::Error;
 use std::fmt::{Display, Formatter};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde_json::Value;
 use serenity::client::Context;
@@ -16,11 +17,22 @@ use serenity::model::id::ChannelId;
 
 use crate::BotConfig;
 use serenity::utils::Colour;
+use tokio::time::Instant;
 
 pub async fn start_crossword_watch(ctx: Context) {
     info!("Starting crossword watch...");
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_secs(10));
+        // start polling at some multiple of 10 seconds so that crosswords are picked up more quickly.
+        // this doesn't account for millis but i'm fine with delay < 1 second.
+        let start = Instant::now()
+            + Duration::from_secs(
+                (10 - SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .expect("time went backwards")
+                    .as_secs()
+                    % 10) as u64,
+            );
+        let mut interval = tokio::time::interval_at(start, Duration::from_secs(10));
         let mut cw: CrosswordWatcher = CrosswordWatcher {
             ctx,
             last_posted_puzzle: None,
