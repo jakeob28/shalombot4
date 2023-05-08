@@ -25,11 +25,12 @@ pub async fn start_crossword_watch(ctx: Context) {
         // start polling at some multiple of 10 seconds so that crosswords are picked up more quickly.
         let start = Instant::now()
             + Duration::from_millis(
-                (10000 - SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .expect("time went backwards")
-                    .as_millis()
-                    % 10000) as u64,
+                (10000
+                    - SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("time went backwards")
+                        .as_millis()
+                        % 10000) as u64,
             );
         let mut interval = tokio::time::interval_at(start, Duration::from_secs(10));
         let mut cw: CrosswordWatcher = CrosswordWatcher {

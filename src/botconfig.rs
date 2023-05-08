@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct GuildSettings {
+    pub(crate) guild_id: u64,
     pub(crate) crossword_channel: u64,
 }
 #[derive(Debug, Deserialize)]

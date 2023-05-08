@@ -7,7 +7,9 @@ use crate::botconfig::BotConfig;
 use events::Handler;
 
 mod botconfig;
+mod commands;
 mod crossword;
+mod digits;
 mod events;
 
 #[tokio::main]
