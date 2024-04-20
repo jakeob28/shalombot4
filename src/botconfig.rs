@@ -5,8 +5,13 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct GuildSettings {
     pub(crate) guild_id: u64,
+    pub(crate) ticket_category: u64,
+    pub(crate) support_team_role: u64,
     pub(crate) crossword_channel: u64,
+    pub(crate) everyone_role: u64,
+    pub(crate) ticket_log_channel: u64,
 }
+
 #[derive(Debug, Deserialize)]
 pub struct BotConfig {
     pub(crate) discord_token: String,

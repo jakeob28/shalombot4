@@ -1,69 +1,55 @@
-use crate::digits::DigitsSolver;
-use serenity::builder;
-use serenity::model::application::interaction::application_command::CommandDataOption;
-use serenity::model::application::interaction::application_command::CommandDataOptionValue::Integer;
-use serenity::model::application::interaction::application_command::CommandDataOptionValue::String;
-use serenity::model::prelude::command::CommandOptionType;
+use serenity::all::{CommandDataOption, CreateCommand, CreateCommandOption};
+use serenity::all::CommandOptionType::{Integer, String};
 
-pub fn run(options: &[CommandDataOption]) -> std::string::String {
+use crate::digits::DigitsSolver;
+
+pub fn run(options: &Vec<CommandDataOption>) -> std::string::String {
     let target = options
         .get(0)
         .expect("expected target")
-        .resolved
-        .as_ref()
-        .unwrap()
-        .clone();
-    let nums = options
+        .value
+        .as_i64()
+        .expect("expected integers");
+    let mut nums = options
         .get(1)
         .expect("expected numbers")
-        .resolved
-        .as_ref()
-        .unwrap()
-        .clone();
+        .value
+        .as_str()
+        .expect("expected string");
 
-    if let (Integer(target), String(mut nums)) = (target, nums) {
-        nums = nums.replace(' ', "");
-        let nums: Vec<usize> = nums
-            .split(',')
-            .map(|s| s.parse().expect("error parsing"))
-            .collect();
-        let solver = DigitsSolver::<6>::solve(target as usize, nums);
-        let solutions = solver.get_solutions();
-        let mut response = "(Some) Solutions:".to_string();
-        for solution in solutions {
-            response += "\n||";
-            for operation in solution {
-                response += &*(operation.to_string() + ", ");
-            }
-            response += "||";
-            response = response.replace(", ||", "||");
+    let binding = nums.replace(' ', "");
+    nums = &*binding;
+    let nums: Vec<usize> = nums
+        .split(',')
+        .map(|s| s.parse().expect("error parsing"))
+        .collect();
+    let solver = DigitsSolver::<6>::solve(target as usize, nums);
+    let solutions = solver.get_solutions();
+    let mut response = "(Some) Solutions:".to_string();
+    for solution in solutions {
+        response += "\n||";
+        for operation in solution {
+            response += &*(operation.to_string() + ", ");
         }
-
-        return response;
+        response += "||";
+        response = response.replace(", ||", "||");
     }
-    "Couldn't read args".to_string()
+
+    return response;
 }
-pub fn register(
-    command: &mut builder::CreateApplicationCommand,
-) -> &mut builder::CreateApplicationCommand {
-    command
-        .name("digits")
+
+pub fn register() -> CreateCommand {
+    CreateCommand::new("digits")
         .description("Solve a digits puzzle")
-        .create_option(|option| {
-            option
-                .name("target")
-                .description("target numer")
-                .kind(CommandOptionType::Integer)
+        .add_option(
+            CreateCommandOption::new(Integer, "target", "target number")
                 .min_int_value(0)
                 .max_int_value(10000)
                 .required(true)
-        })
-        .create_option(|option| {
-            option
-                .name("given_numbers")
-                .description("the numbers you are given to work with, comma separated")
-                .kind(CommandOptionType::String)
+        )
+        .add_option(
+            CreateCommandOption::new(String, "given_numbers", "the numbers you are given to work with, comma separated")
                 .max_length(20)
                 .required(true)
-        })
+        )
 }

@@ -8,15 +8,15 @@ use std::fmt::{Display, Formatter};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde_json::Value;
+use serenity::all::{CreateActionRow, CreateButton, CreateEmbed, CreateMessage};
 use serenity::client::Context;
 use serenity::futures::StreamExt;
 use serenity::json::JsonError;
-use serenity::model::application::component::ButtonStyle;
 use serenity::model::channel::Message;
+use serenity::model::Color;
 use serenity::model::id::ChannelId;
 
 use crate::BotConfig;
-use serenity::utils::Colour;
 use tokio::time::Instant;
 
 pub async fn start_crossword_watch(ctx: Context) {
@@ -25,13 +25,13 @@ pub async fn start_crossword_watch(ctx: Context) {
         // start polling at some multiple of 10 seconds so that crosswords are picked up more quickly.
         let start = Instant::now()
             + Duration::from_millis(
-                (10000
-                    - SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .expect("time went backwards")
-                        .as_millis()
-                        % 10000) as u64,
-            );
+            (10000
+                - SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("time went backwards")
+                .as_millis()
+                % 10000) as u64,
+        );
         let mut interval = tokio::time::interval_at(start, Duration::from_secs(10));
         let mut cw: CrosswordWatcher = CrosswordWatcher {
             ctx,
@@ -66,22 +66,19 @@ impl CrosswordWatcher {
 
     async fn send_crossword_message(&self, date: NaiveDate) {
         let period = puzzle_period(&date);
-        match ChannelId(BotConfig::global_cfg().guild_settings.crossword_channel).send_message(&self.ctx, |m| {
-            m.embed(|e| {
-                e.title(date.format("%A, %B %-d, %Y"))
+        match ChannelId::new(BotConfig::global_cfg().guild_settings.crossword_channel).send_message(
+            &self.ctx,
+            CreateMessage::new().embed(
+                CreateEmbed::new().title(date.format("%A, %B %-d, %Y").to_string())
                     .description("https://www.nytimes.com/crosswords/game/mini")
                     .thumbnail("https://cdn.discordapp.com/attachments/694653665910456322/1071919797819936798/mini-progress-0.png")
-                    .color(Colour::from(BotConfig::global_cfg().embed_color))
+                    .color(Color::from(BotConfig::global_cfg().embed_color))
                     .field("Start", format!("<t:{}:R>", period.0.timestamp()), true)
                     .field("End", format!("<t:{}:R>", period.1.timestamp()), true)
-            }).components(|f| {
-                f.create_action_row(|r| {
-                    r.create_button(|btn| {
-                        btn.style(ButtonStyle::Link).url("https://www.nytimes.com/crosswords/game/mini").label("Play")
-                    })
-                })
-            })
-        }).await {
+            ).components(
+                vec![CreateActionRow::Buttons(vec![CreateButton::new_link("https://www.nytimes.com/crosswords/game/mini").label("Play")])]
+            )
+        ).await {
             Ok(_) => { info!("Crossword message sent!") }
             Err(why) => { error!("Error sending crossword message: {}", why) }
         }
@@ -95,14 +92,16 @@ impl CrosswordWatcher {
             }
         }
         debug!("Scanning messages for last posted puzzle");
-        let mut messages = ChannelId(BotConfig::global_cfg().guild_settings.crossword_channel)
+        let mut messages = ChannelId::new(BotConfig::global_cfg().guild_settings.crossword_channel)
             .messages_iter(&self.ctx)
             .boxed();
-        while let Some(message_result) = messages.next().await {
+         while let Some(message_result) = messages.next().await {
             match message_result {
                 Ok(message) => {
+                    debug!("Checking message with content {}", message.content);
                     let puzzle_date_of_msg =
                         puzzle_time_utils::puzzle_date_from_timestamp(message.timestamp);
+                    debug!("Puzzle date: {}", puzzle_date_of_msg);
                     if puzzle_date_of_msg < *date {
                         debug!("No posted puzzle found today");
                         return false;
@@ -111,6 +110,8 @@ impl CrosswordWatcher {
                         debug!("Found puzzle message already posted");
                         self.last_posted_puzzle = Some(puzzle_date_of_msg);
                         return true;
+                    } else {
+                        debug!("Not crossword post.")
                     }
                 }
                 Err(error) => error!("Error retrieving channel messages: {}", error),

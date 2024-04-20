@@ -1,4 +1,8 @@
 guild_settings:
   guild_id: 392415991759372290
   crossword_channel: 765753596532359190
+  ticket_category: 395579083108515841
+  support_team_role: 395577838071185421
+  everyone_role: 392415991759372290
+  ticket_log_channel: 397028105060876288
 embed_color: 0x00ffff

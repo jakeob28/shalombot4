@@ -1,5 +1,6 @@
-use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone, Timelike, Weekday};
+use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone, Timelike, Weekday, Utc};
 use chrono_tz::Tz;
+use log::debug;
 
 use serenity::model::Timestamp;
 use Weekday::{Fri, Mon, Sat, Sun, Thu, Tue, Wed};
@@ -19,7 +20,7 @@ impl CutoffTime for Weekday {
     }
 }
 
-pub fn puzzle_date_from_datetime(timestamp: DateTime<Tz>) -> NaiveDate {
+pub fn puzzle_date_from_datetime(timestamp: DateTime<Utc>) -> NaiveDate {
     let ny_datetime = timestamp.with_timezone(&REFERENCE_TIMEZONE);
 
     if ny_datetime.hour() < ny_datetime.weekday().cutoff_hour() {
@@ -33,10 +34,7 @@ pub fn puzzle_date_from_datetime(timestamp: DateTime<Tz>) -> NaiveDate {
 }
 
 pub fn puzzle_date_from_timestamp(timestamp: Timestamp) -> NaiveDate {
-    let dt = chrono_tz::UTC.from_utc_datetime(
-        &NaiveDateTime::from_timestamp_opt(timestamp.unix_timestamp(), 0)
-            .expect("Can't parse discord timestamp"),
-    );
+    let dt = DateTime::from_timestamp(timestamp.unix_timestamp(), 0).expect("Can't parse discord timestamp");
     puzzle_date_from_datetime(dt)
 }
 
