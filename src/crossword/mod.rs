@@ -13,8 +13,8 @@ use serenity::client::Context;
 use serenity::futures::StreamExt;
 use serenity::json::JsonError;
 use serenity::model::channel::Message;
-use serenity::model::Color;
 use serenity::model::id::ChannelId;
+use serenity::model::Color;
 
 use crate::BotConfig;
 use tokio::time::Instant;
@@ -25,13 +25,13 @@ pub async fn start_crossword_watch(ctx: Context) {
         // start polling at some multiple of 10 seconds so that crosswords are picked up more quickly.
         let start = Instant::now()
             + Duration::from_millis(
-            (10000
-                - SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("time went backwards")
-                .as_millis()
-                % 10000) as u64,
-        );
+                (10000
+                    - SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("time went backwards")
+                        .as_millis()
+                        % 10000) as u64,
+            );
         let mut interval = tokio::time::interval_at(start, Duration::from_secs(10));
         let mut cw: CrosswordWatcher = CrosswordWatcher {
             ctx,
@@ -95,7 +95,7 @@ impl CrosswordWatcher {
         let mut messages = ChannelId::new(BotConfig::global_cfg().guild_settings.crossword_channel)
             .messages_iter(&self.ctx)
             .boxed();
-         while let Some(message_result) = messages.next().await {
+        while let Some(message_result) = messages.next().await {
             match message_result {
                 Ok(message) => {
                     debug!("Checking message with content {}", message.content);

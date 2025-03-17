@@ -1,8 +1,10 @@
-use std::collections::HashMap;
 use serenity::all::{CommandInteraction, CreateChannel, CreateCommand, CreateEmbed, CreateMessage};
+use std::collections::HashMap;
 
 use serenity::client::Context;
-use serenity::model::channel::{ChannelType, GuildChannel, PermissionOverwrite, PermissionOverwriteType};
+use serenity::model::channel::{
+    ChannelType, GuildChannel, PermissionOverwrite, PermissionOverwriteType,
+};
 use serenity::model::id::{ChannelId, GuildId, RoleId};
 use serenity::model::Permissions;
 use serenity::prelude::Mentionable;
@@ -14,38 +16,52 @@ pub async fn run(ctx: &Context, command: &CommandInteraction) -> String {
 
     let mut ticket_number = 1;
     let channels = match guild_id.channels(&ctx.http).await {
-        Ok(channels) => { channels }
-        Err(_) => { return "Error getting channels".to_string(); }
+        Ok(channels) => channels,
+        Err(_) => {
+            return "Error getting channels".to_string();
+        }
     };
 
     while channel_exists(&channels, ticket_number) {
         ticket_number += 1;
     }
 
-
-    let ticket_channel = match guild_id.create_channel(
-        &ctx.http, CreateChannel::new(format!("ticket-{}", ticket_number))
-            .kind(ChannelType::Text)
-            .category(ChannelId::new(BotConfig::global_cfg().guild_settings.ticket_category))
-            .permissions(vec![
-                PermissionOverwrite {
-                    allow: Permissions::empty(),
-                    deny: Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES,
-                    kind: PermissionOverwriteType::Role(RoleId::new(BotConfig::global_cfg().guild_settings.everyone_role)),
-                },
-                PermissionOverwrite {
-                    allow: Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES,
-                    deny: Permissions::empty(),
-                    kind: PermissionOverwriteType::Role(RoleId::new(BotConfig::global_cfg().guild_settings.support_team_role)),
-                },
-                PermissionOverwrite {
-                    allow: Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES,
-                    deny: Permissions::empty(),
-                    kind: PermissionOverwriteType::Member(command.user.id),
-                }]),
-    ).await {
-        Ok(channel) => { channel }
-        Err(_) => { return "Error Creating Channel".to_string(); }
+    let ticket_channel = match guild_id
+        .create_channel(
+            &ctx.http,
+            CreateChannel::new(format!("ticket-{}", ticket_number))
+                .kind(ChannelType::Text)
+                .category(ChannelId::new(
+                    BotConfig::global_cfg().guild_settings.ticket_category,
+                ))
+                .permissions(vec![
+                    PermissionOverwrite {
+                        allow: Permissions::empty(),
+                        deny: Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES,
+                        kind: PermissionOverwriteType::Role(RoleId::new(
+                            BotConfig::global_cfg().guild_settings.everyone_role,
+                        )),
+                    },
+                    PermissionOverwrite {
+                        allow: Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES,
+                        deny: Permissions::empty(),
+                        kind: PermissionOverwriteType::Role(RoleId::new(
+                            BotConfig::global_cfg().guild_settings.support_team_role,
+                        )),
+                    },
+                    PermissionOverwrite {
+                        allow: Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES,
+                        deny: Permissions::empty(),
+                        kind: PermissionOverwriteType::Member(command.user.id),
+                    },
+                ]),
+        )
+        .await
+    {
+        Ok(channel) => channel,
+        Err(_) => {
+            return "Error Creating Channel".to_string();
+        }
     };
 
     let _message = ticket_channel.send_message(
@@ -81,6 +97,5 @@ fn channel_exists(channels: &HashMap<ChannelId, GuildChannel>, ticket_number: i3
 }
 
 pub fn register() -> CreateCommand {
-    CreateCommand::new("ticket")
-        .description("Create a Shalom Support ticket")
+    CreateCommand::new("ticket").description("Create a Shalom Support ticket")
 }

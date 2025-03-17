@@ -1,6 +1,5 @@
-use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone, Timelike, Weekday, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, TimeZone, Timelike, Utc, Weekday};
 use chrono_tz::Tz;
-use log::debug;
 
 use serenity::model::Timestamp;
 use Weekday::{Fri, Mon, Sat, Sun, Thu, Tue, Wed};
@@ -34,7 +33,8 @@ pub fn puzzle_date_from_datetime(timestamp: DateTime<Utc>) -> NaiveDate {
 }
 
 pub fn puzzle_date_from_timestamp(timestamp: Timestamp) -> NaiveDate {
-    let dt = DateTime::from_timestamp(timestamp.unix_timestamp(), 0).expect("Can't parse discord timestamp");
+    let dt = DateTime::from_timestamp(timestamp.unix_timestamp(), 0)
+        .expect("Can't parse discord timestamp");
     puzzle_date_from_datetime(dt)
 }
 

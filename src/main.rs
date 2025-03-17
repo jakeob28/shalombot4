@@ -20,7 +20,9 @@ async fn main() {
     info!("Loading config...");
     let config = BotConfig::global_cfg();
 
-    let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT | GatewayIntents::GUILD_MESSAGE_REACTIONS;
+    let intents = GatewayIntents::GUILD_MESSAGES
+        | GatewayIntents::MESSAGE_CONTENT
+        | GatewayIntents::GUILD_MESSAGE_REACTIONS;
 
     info!("Creating client...");
     let mut client = Client::builder(&config.discord_token, intents)

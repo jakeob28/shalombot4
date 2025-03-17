@@ -1,5 +1,5 @@
-use serenity::all::{CommandDataOption, CreateCommand, CreateCommandOption};
 use serenity::all::CommandOptionType::{Integer, String};
+use serenity::all::{CommandDataOption, CreateCommand, CreateCommandOption};
 
 use crate::digits::DigitsSolver;
 
@@ -45,11 +45,15 @@ pub fn register() -> CreateCommand {
             CreateCommandOption::new(Integer, "target", "target number")
                 .min_int_value(0)
                 .max_int_value(10000)
-                .required(true)
+                .required(true),
         )
         .add_option(
-            CreateCommandOption::new(String, "given_numbers", "the numbers you are given to work with, comma separated")
-                .max_length(20)
-                .required(true)
+            CreateCommandOption::new(
+                String,
+                "given_numbers",
+                "the numbers you are given to work with, comma separated",
+            )
+            .max_length(20)
+            .required(true),
         )
 }
