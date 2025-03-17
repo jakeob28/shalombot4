@@ -16,7 +16,7 @@ RUN cargo build --release --bin shalombot4
 # We do not need the Rust toolchain to run the binary!
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update
-RUN apt-get install -y openssl
+RUN apt-get install -y openssl ca-certificates
 WORKDIR /app
 COPY --from=builder /app/target/release/shalombot4 /usr/local/bin
 COPY config/default.yaml config/default.yaml
